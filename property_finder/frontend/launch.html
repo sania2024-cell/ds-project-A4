@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Finder - Launch Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #27ae60;
+        }
+
+        .launch-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .info-card h3 {
+            color: #495057;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-card p {
+            color: #6c757d;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .token-status {
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .token-configured {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .token-not-configured {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (max-width: 768px) {
+            .launch-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">🏠</div>
+        <h1>Property Finder</h1>
+        <p class="subtitle">Smart Real Estate Search with Machine Learning</p>
+
+        <div class="status-card">
+            <h3>🗺️ Mapbox Status</h3>
+            <p>Token: <span id="token-status"
+                    class="token-status">Checking...</span></p>
+            <p id="token-details"></p>
+        </div>
+
+        <div class="launch-buttons">
+            <a href="mapbox_test.html" class="btn btn-secondary">🔧 Test
+                Mapbox</a>
+            <a href="index.html" class="btn btn-primary">🚀 Launch App</a>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>🧪 Mapbox Test</h3>
+                <p>Verify your Mapbox integration with sample markers and
+                    controls. Test all map features before using the main app.
+                </p>
+            </div>
+
+            <div class="info-card">
+                <h3>🏢 Main Application</h3>
+                <p>Full Property Finder with search, ML predictions, interactive
+                    maps, and property management features.</p>
+            </div>
+
+            <div class="info-card">
+                <h3>⚡ Quick Setup</h3>
+                <p>Your Mapbox token is configured in <code>config.js</code>.
+                    All components use this centralized configuration.</p>
+            </div>
+
+            <div class="info-card">
+                <h3>🎯 Features Ready</h3>
+                <p>Custom markers, property popups, map controls, geolocation,
+                    and mobile-responsive design.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        function checkTokenStatus() {
+            const statusElement = document.getElementById('token-status');
+            const detailsElement = document.getElementById('token-details');
+
+            if (typeof CONFIG === 'undefined') {
+                statusElement.textContent = 'Config Error';
+                statusElement.className = 'token-status token-not-configured';
+                detailsElement.textContent = 'config.js not found or not loaded';
+                return;
+            }
+
+            const token = CONFIG.MAPBOX_ACCESS_TOKEN;
+
+            if (!token || token === 'YOUR_MAPBOX_ACCESS_TOKEN_HERE') {
+                statusElement.textContent = 'Not Configured';
+                statusElement.className = 'token-status token-not-configured';
+                detailsElement.textContent = 'Please set your token in config.js';
+            } else if (token.startsWith('pk.')) {
+                statusElement.textContent = 'Configured ✅';
+                statusElement.className = 'token-status token-configured';
+                detailsElement.textContent = `Token: ${token.substring(0, 20)}...`;
+            } else {
+                statusElement.textContent = 'Invalid Format';
+                statusElement.className = 'token-status token-not-configured';
+                detailsElement.textContent = 'Token should start with "pk."';
+            }
+        }
+
+        // Check token status when page loads
+        document.addEventListener('DOMContentLoaded', checkTokenStatus);
+    </script>
+</body>
+
+</html>
