@@ -4,7 +4,7 @@ class PropertyFinder {
     constructor() {
         // Load configuration
         this.config = typeof CONFIG !== 'undefined' ? CONFIG : {
-            MAPBOX_ACCESS_TOKEN: 'YOUR_MAPBOX_ACCESS_TOKEN_HERE',
+            MAPBOX_ACCESS_TOKEN: 'pk.eyJ1IjoiYWRpdHlhcGFyaXQiLCJhIjoiY21nNG05ZTNiMHQyYTJpcXk4aGhjMzFoeSJ9.OF-iPZnTQC8wr0J7XALfnQ',
             DEFAULT_MAP_CENTER: [77.1025, 28.7041],
             DEFAULT_MAP_ZOOM: 5,
             API_BASE_URL: 'http://localhost:8080',

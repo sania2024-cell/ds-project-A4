@@ -4,7 +4,7 @@
 const CONFIG = {
     // Mapbox Configuration
     // Get your free token at: https://account.mapbox.com/access-tokens/
-    MAPBOX_ACCESS_TOKEN: 'YOUR_MAPBOX_ACCESS_TOKEN_HERE',
+    MAPBOX_ACCESS_TOKEN: 'pk.eyJ1IjoiYWRpdHlhcGFyaXQiLCJhIjoiY21nNG05ZTNiMHQyYTJpcXk4aGhjMzFoeSJ9.OF-iPZnTQC8wr0J7XALfnQ',
 
     // Default map settings for India
     DEFAULT_MAP_CENTER: [77.1025, 28.7041], // Delhi coordinates
