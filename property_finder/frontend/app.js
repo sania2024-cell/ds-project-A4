@@ -278,6 +278,17 @@ class PropertyFinder {
             }
         } catch (error) {
             console.log('API not available, loading sample data');
+            // Load sample data
+            this.currentProperties = [
+                { id: 1, city: 'Mumbai', type: 'Apartment', price: 5000000, bedrooms: 2 },
+                { id: 2, city: 'Delhi', type: 'House', price: 7500000, bedrooms: 3 },
+                { id: 3, city: 'Bangalore', type: 'Apartment', price: 4500000, bedrooms: 2 },
+                { id: 4, city: 'Chennai', type: 'Villa', price: 12000000, bedrooms: 4 },
+                { id: 5, city: 'Mumbai', type: 'Apartment', price: 6000000, bedrooms: 3 },
+                { id: 6, city: 'Delhi', type: 'House', price: 8500000, bedrooms: 4 },
+                { id: 7, city: 'Bangalore', type: 'Studio', price: 2500000, bedrooms: 1 },
+                { id: 8, city: 'Pune', type: 'Apartment', price: 3500000, bedrooms: 2 }
+            ];
             this.loadSampleData();
         } finally {
             this.showLoading(false);
@@ -856,6 +867,11 @@ class PropertyFinder {
 
     async loadStatistics() {
         try {
+            // Ensure we have properties data
+            if (this.currentProperties.length === 0) {
+                await this.loadInitialData();
+            }
+
             let stats = null;
 
             try {
@@ -864,17 +880,55 @@ class PropertyFinder {
                     stats = await response.json();
                 }
             } catch (apiError) {
+                console.log('API stats not available, calculating locally');
                 // Calculate statistics from current properties
                 stats = this.calculateLocalStatistics();
             }
 
             if (stats) {
                 this.displayStatistics(stats);
+            } else {
+                throw new Error('No statistics available');
             }
 
         } catch (error) {
             console.error('Statistics error:', error);
-            this.showToast('Failed to load statistics', 'error');
+            // Still try to display local statistics if we have properties
+            if (this.currentProperties.length > 0) {
+                const localStats = this.calculateLocalStatistics();
+                this.displayStatistics(localStats);
+            } else {
+                this.showToast('Failed to load statistics', 'error');
+            }
+        }
+    }
+
+    formatPrice(price) {
+        return new Intl.NumberFormat('en-IN', {
+            maximumFractionDigits: 0
+        }).format(price);
+    }
+
+    updateCharts() {
+        // Check if we have properties data
+        if (!this.currentProperties || this.currentProperties.length === 0) {
+            console.error('No properties data available for charts');
+            return;
+        }
+
+        // Ensure Chart.js and ChartManager are available
+        if (typeof Chart === 'undefined' || typeof ChartManager === 'undefined') {
+            console.error('Chart.js or ChartManager not loaded');
+            return;
+        }
+
+        try {
+            // Render the charts directly
+            ChartManager.renderCityChart(this.currentProperties);
+            ChartManager.renderTypeChart(this.currentProperties);
+        } catch (error) {
+            console.error('Error updating charts:', error);
+            this.showToast('Failed to update charts', 'error');
         }
     }
 
@@ -900,19 +954,12 @@ class PropertyFinder {
     }
 
     displayStatistics(stats) {
-        const formatPrice = (price) => {
-            return new Intl.NumberFormat('en-IN', {
-                style: 'currency',
-                currency: 'INR',
-                maximumFractionDigits: 0
-            }).format(price);
-        };
-
+        // Update statistics cards
         document.getElementById('total-properties').textContent =
             stats.total_properties?.toLocaleString() || this.currentProperties.length.toLocaleString();
 
         const avgPrice = stats.price_statistics?.mean || 0;
-        document.getElementById('avg-price').textContent = formatPrice(avgPrice);
+        document.getElementById('avg-price').textContent = '₹' + this.formatPrice(avgPrice);
 
         document.getElementById('total-cities').textContent =
             stats.total_cities || new Set(this.currentProperties.map(p => p.city)).size;
@@ -920,6 +967,13 @@ class PropertyFinder {
         // Random trend for demo
         const trend = (Math.random() > 0.5 ? '+' : '-') + (Math.random() * 10).toFixed(1) + '%';
         document.getElementById('price-trend').textContent = trend;
+
+        // Check if we're in the statistics section
+        const statsSection = document.getElementById('stats');
+        if (statsSection && statsSection.classList.contains('active')) {
+            // Delay chart update slightly to ensure DOM is ready
+            setTimeout(() => this.updateCharts(), 100);
+        }
     }
 
     async fetchWithTimeout(url, timeout = 5000) {

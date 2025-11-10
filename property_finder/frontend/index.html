@@ -13,6 +13,7 @@
         src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css'
         rel='stylesheet' />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -21,7 +22,7 @@
         <div class="container">
             <div class="logo">
                 <i class="fas fa-home"></i>
-                <h1>Property Finder</h1>
+                <h1>ESTATE VISION</h1>
             </div>
             <nav class="nav">
                 <a href="#search" class="nav-link active">Search</a>
@@ -297,12 +298,12 @@
                     <div class="charts-container">
                         <div class="chart-card">
                             <h3>City-wise Distribution</h3>
-                            <div id="city-chart" class="chart"></div>
+                            <canvas id="city-chart" class="chart"></canvas>
                         </div>
 
                         <div class="chart-card">
                             <h3>Property Type Distribution</h3>
-                            <div id="type-chart" class="chart"></div>
+                            <canvas id="type-chart" class="chart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -325,7 +326,79 @@
 
     <!-- Scripts -->
     <script src="config.js"></script>
+    <script src="charts.js"></script>
     <script src="app.js"></script>
+
+    <style>
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .chart-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: 450px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-card h3 {
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+            font-size: 1.2em;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .chart {
+            position: relative;
+            flex: 1;
+            min-height: 350px;
+            width: 100% !important;
+        }
+
+        @media (max-width: 900px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-card {
+                margin-bottom: 20px;
+            }
+        }
+
+        /* Property marker styling */
+        .property-marker {
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            padding: 5px 10px;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        .marker-content {
+            text-align: center;
+        }
+
+        .marker-content .price {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .marker-content .type {
+            color: #7f8c8d;
+            font-size: 10px;
+        }
+    </style>
 </body>
 
 </html>
