@@ -74,6 +74,4 @@ property_finder/
 
 Please read the development guide in `docs/` for coding standards and contribution guidelines.
 
-## License
 
-MIT License - see LICENSE file for details.
