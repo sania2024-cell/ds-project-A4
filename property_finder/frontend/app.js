@@ -8,11 +8,13 @@ class PropertyFinder {
             DEFAULT_MAP_CENTER: [77.1025, 28.7041],
             DEFAULT_MAP_ZOOM: 5,
             API_BASE_URL: 'http://localhost:8080',
-            PROPERTIES_PER_PAGE: 1000
+            PROPERTIES_PER_PAGE: 1000,
+            USE_SAMPLE_DATA: true
         };
 
         this.apiBaseUrl = this.config.API_BASE_URL;
-        this.currentProperties = [];
+        this.allProperties = []; // Store all properties for filtering
+        this.currentProperties = []; // Store filtered/displayed properties
         this.currentPage = 0;
         this.pageSize = this.config.PROPERTIES_PER_PAGE;
         this.map = null;
@@ -265,111 +267,104 @@ class PropertyFinder {
         try {
             this.showLoading(true);
 
-            // Try to load some sample properties
-            const response = await this.fetchWithTimeout(`${this.apiBaseUrl}/search`, 5000);
-
-            if (response.ok) {
-                const data = await response.json();
-                this.currentProperties = data.properties || [];
-                this.displayProperties(this.currentProperties);
-                this.showToast(`Loaded ${this.currentProperties.length} properties`, 'success');
-            } else {
-                throw new Error('API not available');
+            if (!this.config.USE_SAMPLE_DATA) {
+                try {
+                    const response = await this.fetchWithTimeout(`${this.apiBaseUrl}/search`, 3000);
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.allProperties = data.properties || [];
+                        this.currentProperties = [...this.allProperties];
+                        this.displayProperties(this.currentProperties);
+                        this.showToast(`Loaded ${this.currentProperties.length} properties`, 'success');
+                        return;
+                    }
+                } catch (apiError) {
+                    console.log('API not available, loading from CSV');
+                }
             }
+
+            // Load from CSV file
+            await this.loadSampleData();
         } catch (error) {
-            console.log('API not available, loading sample data');
-            // Load sample data
-            this.currentProperties = [
-                { id: 1, city: 'Mumbai', type: 'Apartment', price: 5000000, bedrooms: 2 },
-                { id: 2, city: 'Delhi', type: 'House', price: 7500000, bedrooms: 3 },
-                { id: 3, city: 'Bangalore', type: 'Apartment', price: 4500000, bedrooms: 2 },
-                { id: 4, city: 'Chennai', type: 'Villa', price: 12000000, bedrooms: 4 },
-                { id: 5, city: 'Mumbai', type: 'Apartment', price: 6000000, bedrooms: 3 },
-                { id: 6, city: 'Delhi', type: 'House', price: 8500000, bedrooms: 4 },
-                { id: 7, city: 'Bangalore', type: 'Studio', price: 2500000, bedrooms: 1 },
-                { id: 8, city: 'Pune', type: 'Apartment', price: 3500000, bedrooms: 2 }
-            ];
-            this.loadSampleData();
+            console.error('Failed to load data:', error);
+            this.showToast('Failed to load properties', 'error');
         } finally {
             this.showLoading(false);
         }
     }
 
-    loadSampleData() {
+    async loadSampleData() {
         console.log('Loading sample properties...');
-        fetch('../data/sample_properties.csv')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.text();
-            })
-            .then(csvText => {
-                console.log('CSV file loaded successfully');
-                const lines = csvText.split('\n');
-                console.log(`Found ${lines.length} lines in CSV`);
-                const headers = lines[0].split(',');
-                console.log('CSV Headers:', headers);
-                
-                this.currentProperties = lines.slice(1)
-                    .filter(line => line.trim()) // Skip empty lines
-                    .map(line => {
-                        const values = line.split(',');
-                        const property = {};
-                        
-                        headers.forEach((header, index) => {
-                            const value = values[index];
-                            if (header === 'ID') {
-                                property.id = parseInt(value);
-                            } else if (header === 'Price') {
-                                property.price = parseInt(value);
-                            } else if (header === 'Bedrooms' || header === 'Bathrooms') {
-                                property[header.toLowerCase()] = parseInt(value);
-                            } else if (header === 'Size') {
-                                property.size = parseInt(value);
-                            } else if (header === 'Latitude' || header === 'Longitude') {
-                                property[header.toLowerCase()] = parseFloat(value);
-                            } else if (header === 'Amenities') {
-                                property.amenities = value.replace(/"/g, '').split(',').map(a => a.trim());
-                            } else {
-                                property[header.toLowerCase()] = value;
-                            }
-                        });
-                        
-                        // Add predicted price (you can modify this calculation as needed)
-                        property.predicted_price = Math.round(property.price * 1.05);
-                        return property;
-                    });
-                
-                console.log(`Processed ${this.currentProperties.length} properties`);
-                console.log('First few properties:', this.currentProperties.slice(0, 3));
+        try {
+            const response = await fetch('../data/sample_properties.csv');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const csvText = await response.text();
+            console.log('CSV file loaded successfully');
+            const lines = csvText.split('\n');
+            console.log(`Found ${lines.length} lines in CSV`);
+            const headers = lines[0].split(',');
+            console.log('CSV Headers:', headers);
+            
+            this.allProperties = lines.slice(1)
+                .filter(line => line.trim()) // Skip empty lines
+                .map(line => {
+                    const values = line.split(',');
+                    const property = {};
                     
-                this.displayProperties(this.currentProperties);
-                this.showToast(`Loaded ${this.currentProperties.length} properties`, 'success');
-            })
-            .catch(error => {
-                console.error('Failed to load CSV:', error);
-                console.log('Current directory context:', window.location.href);
-                // Fallback to a minimal set of properties if CSV fails to load
-                this.currentProperties = [{
-                    id: 1,
-                    city: "Mumbai",
-                    price: 8500000,
-                    bedrooms: 3,
-                    bathrooms: 2,
-                    size: 1200,
-                    type: "Apartment",
-                    latitude: 19.0760,
-                    longitude: 72.8777,
-                    amenities: ["Gym", "Pool", "Parking"],
-                    predicted_price: 8700000
-                }];
-                this.displayProperties(this.currentProperties);
-                this.showToast('Failed to load properties data', 'error');
-            });
-
-        this.displayProperties(this.currentProperties);
-        this.showToast('Loaded sample data for demonstration', 'warning');
+                    headers.forEach((header, index) => {
+                        const value = values[index];
+                        if (header === 'ID') {
+                            property.id = parseInt(value);
+                        } else if (header === 'Price') {
+                            property.price = parseInt(value);
+                        } else if (header === 'Bedrooms' || header === 'Bathrooms') {
+                            property[header.toLowerCase()] = parseInt(value);
+                        } else if (header === 'Size') {
+                            property.size = parseInt(value);
+                        } else if (header === 'Latitude' || header === 'Longitude') {
+                            property[header.toLowerCase()] = parseFloat(value);
+                        } else if (header === 'Amenities') {
+                            property.amenities = value.replace(/"/g, '').split(',').map(a => a.trim());
+                        } else {
+                            property[header.toLowerCase()] = value;
+                        }
+                    });
+                    
+                    // Add predicted price
+                    property.predicted_price = Math.round(property.price * 1.05);
+                    return property;
+                });
+            
+            this.currentProperties = [...this.allProperties];
+            console.log(`Processed ${this.allProperties.length} properties`);
+            console.log('First few properties:', this.allProperties.slice(0, 3));
+                
+            this.displayProperties(this.currentProperties);
+            this.showToast(`Loaded ${this.currentProperties.length} properties`, 'success');
+        } catch (error) {
+            console.error('Failed to load CSV:', error);
+            console.log('Current directory context:', window.location.href);
+            // Fallback to a minimal set of properties if CSV fails to load
+            this.allProperties = [{
+                id: 1,
+                city: "Mumbai",
+                price: 8500000,
+                bedrooms: 3,
+                bathrooms: 2,
+                size: 1200,
+                type: "Apartment",
+                latitude: 19.0760,
+                longitude: 72.8777,
+                amenities: ["Gym", "Pool", "Parking"],
+                predicted_price: 8700000
+            }];
+            this.currentProperties = [...this.allProperties];
+            this.displayProperties(this.currentProperties);
+            this.showToast('Failed to load properties data', 'error');
+        }
     }
 
     async searchProperties() {
@@ -381,18 +376,23 @@ class PropertyFinder {
 
             console.log('Searching with filters:', filters);
 
-            try {
-                const response = await this.fetchWithTimeout(`${this.apiBaseUrl}/search?${queryString}`, 5000);
-
-                if (response.ok) {
-                    const data = await response.json();
-                    this.currentProperties = data.properties || [];
-                } else {
-                    throw new Error('API search failed');
+            if (!this.config.USE_SAMPLE_DATA) {
+                try {
+                    const response = await this.fetchWithTimeout(`${this.apiBaseUrl}/search?${queryString}`, 3000);
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.currentProperties = data.properties || [];
+                    } else {
+                        throw new Error('API search failed');
+                    }
+                } catch (apiError) {
+                    console.log('API search failed, filtering locally');
+                    // Fallback to client-side filtering from all properties
+                    this.currentProperties = this.filterPropertiesByFilters(this.allProperties, filters);
                 }
-            } catch (apiError) {
-                // Fallback to client-side filtering
-                this.currentProperties = this.filterPropertiesByFilters(this.currentProperties, filters);
+            } else {
+                // Client-side filtering from all properties
+                this.currentProperties = this.filterPropertiesByFilters(this.allProperties, filters);
             }
 
             this.currentPage = 0;
@@ -452,8 +452,9 @@ class PropertyFinder {
         document.getElementById('min-size').value = '';
 
         // Reset to all properties
-        this.loadInitialData();
-        this.showToast('Search cleared', 'success');
+        this.currentProperties = [...this.allProperties];
+        this.displayProperties(this.currentProperties);
+        this.showToast('Search cleared - showing all properties', 'success');
     }
 
     sortProperties(sortBy) {
